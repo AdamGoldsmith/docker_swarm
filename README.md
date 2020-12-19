@@ -49,7 +49,7 @@ When run with default options, the following tasks will be applied in this order
     1. Copy docker-compose files to Docker manager node
     1. Create and run Docker stacks
 
-##  Default `nfs` stack services
+##  Default `test` stack services
 
 * [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
 * [phpmyadmin](https://www.phpmyadmin.net)
@@ -129,7 +129,7 @@ To overide group/host variable definitions, uncomment and amend the variables in
 
 ## Optional use of Vagrant
 
-This repo supplies an Ansible playbook that locally creates a Vagrantfile and target preparation script using the contents of the `ds` inventory. These can be used to deploy and prepare a complete [VirtualBox](https://www.virtualbox.org) test infrastructure using [Vagrant](https://www.vagrantup.com) ready for the Docker swarm deployment. Although it is designed to work out of the box by design, please ensure that the following vagrant variables are configured correctly.
+This repo supplies an Ansible playbook that locally creates a Vagrantfile and target preparation script using the contents of the `ds` inventory. These can be used to provision and prepare a complete [VirtualBox](https://www.virtualbox.org) test infrastructure using [Vagrant](https://www.vagrantup.com) ready for the Docker swarm deployment. Although it is designed to work out of the box by design, please ensure that the following vagrant variables are configured correctly.
 
 `inv.d/ds/host_vars/localhost.yml`
 ```yaml
@@ -171,7 +171,7 @@ cd vagrant; vagrant up; cd ..
 ./scripts/prepare_ansible_targets.sh
 ```
 
-At this point, a complete test infrastructure will now be deployed and ready to configure!
+At this point, a complete test infrastructure will now be provisioned, ready to be configured!
 
 ## Stack deployment
 
