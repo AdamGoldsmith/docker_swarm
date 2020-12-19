@@ -1,0 +1,11 @@
+---
+
+- name: Manage Docker deployment
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+- import_playbook: docker_prepare.yml
+- import_playbook: docker_install.yml
+- import_playbook: docker_swarm.yml
+- import_playbook: docker_stacks.yml

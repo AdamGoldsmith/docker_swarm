@@ -1,0 +1,19 @@
+---
+
+- name: Prepare Docker environments
+  hosts: docker
+  gather_facts: no
+  become: yes
+  tags:
+    - docker_prepare
+    - docker
+
+  tasks:
+
+    - name: Run user preparation role
+      include_role:
+        name: ansible_role_user_prepare
+
+    - name: Run directory preparation role
+      include_role:
+        name: ansible_role_dir_prepare

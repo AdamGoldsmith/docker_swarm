@@ -1,0 +1,23 @@
+---
+
+group_data:
+  - name: testgrp1
+    gid: 10100
+
+user_data:
+  - name: testuser1
+    group: testgrp1
+    # For supplimentary groups use "groups" list
+    # groups:
+    #   - admin
+    #   - docker
+    #   - etc
+    comment: Test user
+    expires: -1
+    home: /home/testuser1
+    shell: /bin/false
+    uid: 10100
+
+# Any group in sudo_groups list will be added to sudo
+# Following example for illustrative purposes only
+sudo_groups: []

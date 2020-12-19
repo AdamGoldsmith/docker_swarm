@@ -1,0 +1,6 @@
+pip
+ansible
+ansible-lint
+netaddr
+jsondiff
+pyyaml

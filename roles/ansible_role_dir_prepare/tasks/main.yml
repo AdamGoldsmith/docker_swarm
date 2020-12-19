@@ -1,0 +1,86 @@
+---
+
+- name: Block for LVM usage
+  block:
+
+    - name: Install software packages
+      yum:
+        name: "{{ lvm_packages }}"
+        state: present
+
+    - name: Create volume groups
+      lvg:
+        vg: "{{ vg['name'] }}"
+        pvs: "{{ vg['disks'] | join(',') }}"
+      loop: "{{ vg_data }}"
+      loop_control:
+        loop_var: vg
+        label: "{{ vg['name'] }}"
+      tags:
+        - molecule-notest
+
+    - name: Create logical volumes
+      lvol:
+        vg: "{{ vg[0]['name'] }}"
+        lv: "{{ vg[1]['name'] }}"
+        size: "{{ vg[1]['size'] }}"
+      loop: "{{ vg_data | subelements('lvs', {'skip_missing': True}) }}"
+      loop_control:
+        loop_var: vg
+        label: "{{ vg[0]['name'] }} : {{ vg[1]['name'] }}"
+      tags:
+        - molecule-notest
+
+    - name: Create filesystems
+      filesystem:
+        dev: "/dev/{{ vg[0]['name'] }}/{{ vg[1]['name'] }}"
+        fstype: "{{ vg[1]['type'] }}"
+        resizefs: yes
+      loop: "{{ vg_data | subelements('lvs', {'skip_missing': True}) }}"
+      loop_control:
+        loop_var: vg
+        label: "{{ vg[0]['name'] }} : {{ vg[1]['name'] }}"
+      register: fs_out
+      tags:
+        - molecule-notest
+
+    # Open permissions of mountpoint before mounting filesystem
+    - name: Create mountpoints
+      file:
+        path: "{{ fs['vg'][1]['mount'] }}"
+        state: directory
+        mode: "0777"
+      loop: "{{ fs_out['results'] }}"
+      loop_control:
+        loop_var: fs
+        label: "{{ fs['vg'][1]['mount'] }}"
+      when: fs is changed
+      tags:
+        - molecule-notest
+
+    - name: Mount filesystems
+      mount:
+        path: "{{ fs['vg'][1]['mount'] }}"
+        src: "/dev/{{ fs['vg'][0]['name'] }}/{{ fs['vg'][1]['name'] }}"
+        fstype: "{{ fs['vg'][1]['type'] }}"
+        state: mounted
+      loop: "{{ fs_out['results'] }}"
+      loop_control:
+        loop_var: fs
+        label: "{{ fs['vg'][1]['mount'] }}"
+      tags:
+        - molecule-notest
+
+  when: use_lvm | default(True) | bool
+
+- name: Apply directory structure
+  file:
+    path: "{{ dir['name'] }}"
+    owner: "{{ dir['owner'] | default(omit) }}"
+    group: "{{ dir['group'] | default(omit) }}"
+    mode: "{{ dir['mode'] | default(omit) }}"
+    state: directory
+  loop: "{{ data_structure }}"
+  loop_control:
+    loop_var: dir
+    label: "{{ dir['name'] }}"

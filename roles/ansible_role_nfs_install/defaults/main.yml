@@ -1,0 +1,11 @@
+---
+
+nfs_packages:
+  - 'nfs-utils'
+# /etc/exports entries are very specific, eg these have different meanings:
+# /home bob.example.com(rw)
+# /home bob.example.com (rw)
+# Be specific how you create these entries (an example is shown below)
+
+nfs_data: []
+  # - /nfs 10.1.88.0/24(rw,sync,no_subtree_check)

@@ -1,0 +1,27 @@
+---
+
+use_lvm: yes
+lvm_packages:
+  - 'lvm*'
+
+vg_data:
+  - name: datavg
+    disks:
+      - /dev/sdb
+    lvs:
+      - name: data
+        size: "9728"
+        mount: /data
+        type: xfs
+      # Continue in this fashion
+
+data_structure:
+  - name: /data
+    owner: root
+    group: root
+    mode: "0740"
+  # Continue in this fashion
+  # - name: /data/db
+  #   owner: root
+  #   group: root
+  #   mode: "0740"

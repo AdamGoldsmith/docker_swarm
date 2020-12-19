@@ -1,0 +1,5 @@
+---
+
+nfs_data:
+  # no_root_squash has security implications - do not use in production
+  - /nfs/data 10.1.88.0/24(rw,sync,no_subtree_check,no_root_squash)

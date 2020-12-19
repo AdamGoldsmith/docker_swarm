@@ -1,0 +1,19 @@
+---
+
+- name: Prepare NFS Server
+  hosts: nfs
+  gather_facts: no
+  become: yes
+  tags:
+    - nfs_prepare
+    - nfs
+
+  tasks:
+
+    - name: Run user preparation role
+      include_role:
+        name: ansible_role_user_prepare
+
+    - name: Run directory preparation role
+      include_role:
+        name: ansible_role_dir_prepare

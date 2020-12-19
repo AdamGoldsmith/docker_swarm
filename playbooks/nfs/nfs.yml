@@ -1,0 +1,9 @@
+---
+
+- name: Manage NFS Server deployment
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+- import_playbook: nfs_prepare.yml
+- import_playbook: nfs_install.yml

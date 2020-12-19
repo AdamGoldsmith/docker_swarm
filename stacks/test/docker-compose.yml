@@ -1,0 +1,89 @@
+version: '3.7'
+
+services:
+  nfs:
+    image: alpine:latest
+    command: ash -c "echo \"$$(date) - $${STACK_ENV:-BASE} $$(hostname)\" | tee -a /nfs-data/hosts.out; while true; do sleep 10; done"
+    volumes:
+      - type: volume
+        source: nfs-data
+        target: /nfs-data
+        volume:
+          nocopy: true
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+    environment:
+      STACK_ENV: BASE
+
+  viz:
+    image: dockersamples/visualizer
+    ports:
+      - "8088:8080/tcp"
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  web:
+    image: nginx
+    ports:
+     - 8080:80
+
+  mysql:
+    image: mysql
+    volumes:
+      - type: volume
+        source: nfs-mysql
+        target: /var/lib/mysql
+        volume:
+          nocopy: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql
+
+  mariadb:
+    image: mariadb
+    volumes:
+      - type: volume
+        source: nfs-mariadb
+        target: /var/lib/mysql
+        volume:
+          nocopy: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=mariadb
+
+  phpadmin:
+    image: phpmyadmin
+    ports:
+      - 8081:80
+    environment:
+      - PMA_ARBITRARY=1
+    depends_on:
+      - mysql
+      - mariadb
+
+volumes:
+  nfs-data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.1.88.99,nolock,soft,rw
+      device: ":/nfs/data"
+  nfs-mariadb:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.1.88.99,nolock,soft,rw
+      device: ":/nfs/data/mariadb"
+  nfs-mysql:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.1.88.99,nolock,soft,rw
+      device: ":/nfs/data/mysql"

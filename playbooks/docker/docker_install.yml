@@ -1,0 +1,15 @@
+---
+
+- name: Install Docker components
+  hosts: docker
+  gather_facts: no
+  become: yes
+  tags:
+    - docker_install
+    - docker
+
+  tasks:
+
+    - name: Run docker engine installation role
+      include_role:
+        name: ansible_role_docker_install

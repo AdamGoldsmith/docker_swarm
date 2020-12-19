@@ -1,0 +1,68 @@
+---
+
+- name: Remove out-dated docker software
+  yum:
+    name: "{{ old_docker_packages }}"
+    state: absent
+
+- name: Install yum utils
+  yum:
+    name: yum-utils
+    state: present
+
+- name: Add Docker repo GPG key
+  rpm_key:
+    key: "{{ docker_repo_data['gpg_key'] }}"
+    state: present
+
+- name: Add Docker yum repository
+  get_url:
+    url: "{{ docker_repo_data['url'] }}"
+    dest: "/etc/yum.repos.d/docker-{{ docker_edition }}.repo"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install docker packages
+  yum:
+    name: "{{ docker_packages }}"
+    state: present
+  notify: restart_docker
+
+- name: Enable EPEL repo
+  yum:
+    name: epel-release
+    state: present
+
+- name: Install pip
+  yum:
+    name: python-pip
+    state: present
+
+- name: Install Docker pip requirements
+  pip:
+    name: "{{ docker_pip_packages }}"
+    state: present
+
+- name: Enable & start docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+    masked: no
+
+- name: Display insecure registries
+  debug:
+    var: docker_insecure_regs
+    verbosity: "{{ verbosity_level | default(1) }}"
+
+- name: Enable insecure registries
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+    backup: yes
+  when: docker_insecure_regs | default([]) | length
+  notify: restart_docker

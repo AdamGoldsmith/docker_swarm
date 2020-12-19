@@ -1,0 +1,51 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby
+
+# The servers this vagrantfile creates will be managed by Ansible after they are created.
+# Copy the public SSH key from the Ansible server to the vagrant host for deployment.
+
+# Specify Vagrant box
+BOX_NAME = "{{ vagrant_box_version | default('centos/7') }}"
+
+# Vagrantfile API/syntax version.
+VAGRANTFILE_API_VERSION = "2"
+
+INSTALL_GUEST_ADDITIONS = {{ vagrant_guest_additions | default(false) | bool | lower }}
+SSH_PUB_KEY="id_rsa.pub"
+
+servers=[
+{% for host in groups['docker'] + groups['nfs'] %}
+  {
+    :hostname => "{{ host + vagrant_domain | default('') }}",
+    :ip => "{{ hostvars[host]['ansible_host'] }}",
+    :ssh_port => "{{ 8800 + loop['index'] }}",
+    :ram => {{ hostvars[host]['vagrant_ram'] }},
+    :disk => {{ hostvars[host]['vagrant_disk'] }}
+  }{{ ',' if not loop.last }}
+{% endfor %}
+]
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  servers.each do |machine|
+    if Vagrant.has_plugin?("vagrant-vbguest")
+      config.vbguest.auto_update = INSTALL_GUEST_ADDITIONS
+    end
+    config.vm.define machine[:hostname] do |node|
+      node.vm.box = BOX_NAME
+      node.vm.hostname = machine[:hostname]
+      node.vm.network "private_network", ip: machine[:ip]
+      node.vm.network :forwarded_port, guest: 22, host: machine[:ssh_port], id: 'ssh'
+      node.vm.provider "virtualbox" do |vb|
+        file_to_disk = machine[:hostname] + ".data.vdi"
+          unless File.exist?(file_to_disk)
+            # 10 GB disk file
+            vb.customize ['createhd', '--filename', file_to_disk, '--size', machine[:disk]]
+          end
+          vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
+        vb.customize ["modifyvm", :id, "--memory", machine[:ram]]
+        vb.name = machine[:hostname]
+      end
+      node.vm.provision "file", source: SSH_PUB_KEY, destination: "~/.ssh/authorized_keys"
+    end
+  end
+end

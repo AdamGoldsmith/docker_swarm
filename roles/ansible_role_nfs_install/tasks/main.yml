@@ -1,0 +1,26 @@
+---
+
+- name: Install NFS packages
+  yum:
+    name: "{{ nfs_packages }}"
+    state: present
+  notify: restart_nfs
+
+- name: Enable & start NFS services
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+    masked: no
+  loop:
+    - nfs-server
+    - rpcbind
+
+- name: Create NFS entries
+  lineinfile:
+    path: /etc/exports
+    regexp: "{{ '^' + item.split(' ', 1)[0] }}"
+    line: "{{ item }}"
+    state: present
+  loop: "{{ nfs_data }}"
+  notify: export_nfs

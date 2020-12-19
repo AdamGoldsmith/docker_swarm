@@ -1,0 +1,9 @@
+---
+
+- name: Manage site configuration
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+- import_playbook: nfs/nfs.yml
+- import_playbook: docker/docker.yml

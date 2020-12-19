@@ -1,0 +1,36 @@
+---
+
+- name: Create groups
+  group:
+    name: "{{ g_item['name'] }}"
+    gid: "{{ g_item['gid'] | default(omit) }}"
+  loop: "{{ group_data }}"
+  loop_control:
+    loop_var: g_item
+    label: "{{ g_item['name'] }}"
+
+- name: Create users
+  user:
+    name: "{{ u_item['name'] }}"
+    group: "{{ u_item['group'] | default(omit) }}"
+    groups: "{{ u_item['groups'] | default(omit) }}"
+    comment: "{{ u_item['comment'] | default(omit) }}"
+    expires: "{{ u_item['expires'] | default(omit) }}"
+    home: "{{ u_item['home'] | default(omit) }}"
+    shell: "{{ u_item['shell'] | default(omit) }}"
+    uid: "{{ u_item['uid'] | default(omit) }}"
+  loop: "{{ user_data }}"
+  loop_control:
+    loop_var: u_item
+    label: "{{ u_item['name'] }}"
+
+- name: Add sudo group access
+  copy:
+    dest: "/etc/sudoers.d/{{ sudo_item }}"
+    content: "%{{ sudo_item }} ALL=(ALL) ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+  loop: "{{ sudo_groups }}"
+  loop_control:
+    loop_var: sudo_item

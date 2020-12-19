@@ -1,0 +1,14 @@
+---
+
+- name: Restart NFS service
+  listen: restart_nfs
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - nfs-server
+    - rpcbind
+
+- name: Re-export NFS directories
+  listen: export_nfs
+  command: 'exportfs -ra'

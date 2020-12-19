@@ -1,0 +1,30 @@
+---
+
+use_lvm: yes
+vg_data:
+  - name: datavg
+    disks:
+      - /dev/sdb
+    lvs:
+      - name: nfs
+        size: "{{ vagrant_disk | default(10240) | int - 512 }}"
+        mount: /nfs
+        type: xfs
+
+data_structure:
+  - name: /nfs
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"
+  - name: /nfs/data
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"
+  - name: /nfs/data/mariadb
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"
+  - name: /nfs/data/mysql
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"

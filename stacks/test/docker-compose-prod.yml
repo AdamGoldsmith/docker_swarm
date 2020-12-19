@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  nfs:
+    environment:
+      STACK_ENV: PROD
+
+  mysql:
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysqlprod
+
+  mariadb:
+    environment:
+      - MYSQL_ROOT_PASSWORD=mariadbprod

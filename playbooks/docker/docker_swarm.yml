@@ -1,0 +1,120 @@
+---
+
+# Always run this play to discover and set the Docker swarm network address
+# This fact will be used to avoid cross-host fact collection later
+
+# TODO: Add scale-out logic to accommodate multi-manager nodes
+# Suggest running this task only once to define a manager node to
+# initialise the cluster on, record that node in a localhost fact,
+# then repeat manager join commands on the remiaining nodes in the
+# docker_manager group.
+# Not necessary at the moment as there is only 1 manager node defined,
+# but good to have the functionality available for future needs.
+# This should also help to remove the non-ideal way of running
+# against the swarm manager node later in this playbook:
+# delegate_to: "{{ groups['docker_manager'][0] }}"
+
+- name: Set Docker swarm manager address
+  hosts: docker_manager
+  gather_facts: yes
+  tags:
+    - swarm_manager
+    - swarm_worker
+    - swarm
+
+  vars:
+
+    # Set in group/host vars, or uncomment & amend to use local variables
+    # docker_swarm_network: '0.0.0.0/0'
+
+  tasks:
+
+    - name: Set Docker swarm address
+      set_fact:
+        docker_swarm_addr: "{{ ansible_all_ipv4_addresses |
+          ipaddr(docker_swarm_network |
+          default(ansible_default_ipv4['address'])) |
+          list | first }}"
+      # Delegate to localhost for easy cross-host reference
+      delegate_to: localhost
+      delegate_facts: yes
+
+    - name: Debug swarm address
+      debug:
+        var: hostvars['localhost']['docker_swarm_addr']
+        verbosity: "{{ verbosity_level | default(1) }}"
+
+
+- name: Configure Docker swarm manager
+  hosts: docker_manager
+  gather_facts: no
+  become: yes
+  tags:
+    - swarm_manager
+    - swarm
+
+  vars:
+
+    # Mimic role default vars - playbook vars outweigh host/group vars
+    # Use these default vars only if no overiding vars are applied
+    default_docker_swarm_port: 2377
+
+  tasks:
+
+    - name: Initialise a new swarm with default parameters
+      vars:
+        adv_addr: "{{ hostvars['localhost']['docker_swarm_addr'] }}"
+      docker_swarm:
+        state: present
+        advertise_addr: "{{ adv_addr }}"
+        listen_addr: "{{ adv_addr }}:{{ docker_swarm_port |
+          default(default_docker_swarm_port)}}"
+      register: swarm_info
+      run_once: yes
+
+
+- name: Configure Docker swarm workers
+  hosts: docker_worker
+  gather_facts: yes
+  become: yes
+  tags:
+    - swarm_worker
+    - swarm
+
+  vars:
+
+    # Mimic role default vars - playbook vars outweigh host/group vars
+    # Use these default vars only if no overiding vars are applied
+    default_docker_swarm_port: 2377
+    # Set in group/host vars, or uncomment & amend to use local variables
+    # docker_swarm_network: '10.1.88.0/24'
+
+  tasks:
+
+    - name: Check swarm status on manager
+      docker_swarm_info:
+      ignore_errors: yes
+      register: swarm_info
+      delegate_to: "{{ groups['docker_manager'][0] }}"
+      run_once: yes
+
+    - name: Swarm info message
+      fail:
+        msg: "Docker swarm is not running on manager - configure this first"
+      when: swarm_info is failed
+
+    - name: Add Docker swarm worker nodes
+      vars:
+        adv_addr: "{{ hostvars['localhost']['docker_swarm_addr'] }}"
+        c_token: "{{ swarm_info['swarm_facts']['JoinTokens']['Worker'] }}"
+      docker_swarm:
+        state: join
+        advertise_addr: "{{ ansible_all_ipv4_addresses |
+          ipaddr(docker_swarm_network |
+          default(ansible_default_ipv4['address'])) |
+          list | first }}"
+        join_token: "{{ c_token }}"
+        remote_addrs:
+          - "{{ adv_addr }}:{{ docker_swarm_port |
+              default(default_docker_swarm_port) }}"
+      when: swarm_info is not failed
