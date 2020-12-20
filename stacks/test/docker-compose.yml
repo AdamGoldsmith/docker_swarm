@@ -1,6 +1,19 @@
 version: '3.7'
 
 services:
+  viz:
+    image: dockersamples/visualizer
+    ports:
+      - "8088:8080/tcp"
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
   nfs:
     image: alpine:latest
     command: ash -c "echo \"$$(date) - $${STACK_ENV:-BASE} $$(hostname)\" | tee -a /nfs-data/hosts.out; while true; do sleep 10; done"
@@ -17,19 +30,10 @@ services:
           - node.role == worker
     environment:
       STACK_ENV: BASE
-
-  viz:
-    image: dockersamples/visualizer
-    ports:
-      - "8088:8080/tcp"
-    volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
     deploy:
       placement:
         constraints:
-          - node.role == manager
+          - node.role == worker
 
   web:
     image: nginx
@@ -46,6 +50,10 @@ services:
           nocopy: true
     environment:
       - MYSQL_ROOT_PASSWORD=mysql
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
 
   mariadb:
     image: mariadb
@@ -57,6 +65,10 @@ services:
           nocopy: true
     environment:
       - MYSQL_ROOT_PASSWORD=mariadb
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
 
   phpadmin:
     image: phpmyadmin
@@ -67,6 +79,10 @@ services:
     depends_on:
       - mysql
       - mariadb
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
 
 volumes:
   nfs-data:
