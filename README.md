@@ -11,8 +11,8 @@ From root directory of repo:
 1. `cd vagrant; vagrant up; cd ..`
 1. `./scripts/prepare_ansible_targets.sh`
 1. `ansible-playbook playbooks/site.yml`
-1. Point browser at [http://localhost:8088](http://localhost:8088) to access [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
-1. Point browser at [http://localhost:8081](http://localhost:8081) to access [phpmyadmin](https://www.phpmyadmin.net)
+1. Point browser at http://10.1.88.11:8088 to access [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
+1. Point browser at http://10.1.88.11:8081 to access [phpmyadmin](https://www.phpmyadmin.net)
 
 ## Overview of architecture
 
