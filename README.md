@@ -6,6 +6,7 @@ Collection of playbooks and roles to prepare and deploy hosts to run in a Docker
 
 From root directory of repo:
 
+1. `./scripts/ansible_venv.sh && source ~/venvs/ansible_ds/bin/activate` (__Optional__ step that creates & sources an ansible-enabled python virtual environment [__Requires python3__])
 1. `ansible-playbook playbooks/vagrant/prepare_vagrant.yml -e "vagrant_script_check=no"`
 1. `cd vagrant; vagrant up; cd ..`
 1. `./scripts/prepare_ansible_targets.sh`
@@ -69,6 +70,7 @@ When run with default options, the following tasks will be applied in this order
 * Python's netaddr module (pip - `netaddr`, yum - `python-netaddr`)
 * Python's docker module (pip - `docker`)
 * Vagrant (__*optional*__) (tested with 2.2.6)
+* Python3 (__*optional*__) (for creating a virtual env using supplied utility script)
 
 ## Inventory directories
 
@@ -126,6 +128,16 @@ This is a network range used by Ansible to detect the correct interface/IP addre
 __Playbook variables__
 
 To overide group/host variable definitions, uncomment and amend the variables in the `vars:` section of the playbooks where denoted by the relevent comments section.
+
+## Optional use of Ansible in Python3 virtual environment
+
+This repo supplies a utility script for creating an Ansible virtual environment with the necessary pip package dependencies installed. This is a convenient way to run Ansible in a dedicated environment without installing it directly onto the host operating system. Run the following from the repo root directory to create & activate the Ansible venv.
+
+```
+./scripts/ansible_venv.sh && source ~/venvs/ansible_ds/bin/activate
+```
+
+__Note:__ To deactivate the venv, run `deactivate` from any directory
 
 ## Optional use of Vagrant
 
