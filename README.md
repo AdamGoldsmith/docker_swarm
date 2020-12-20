@@ -13,6 +13,7 @@ From root directory of repo:
 1. `ansible-playbook playbooks/site.yml`
 1. Point browser at http://10.1.88.11:8088 to access [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
 1. Point browser at http://10.1.88.11:8081 to access [phpmyadmin](https://www.phpmyadmin.net)
+1. Point browser at http://10.1.88.11:8080 to access [nginx](https://www.nginx.com)
 
 ## Overview of architecture
 

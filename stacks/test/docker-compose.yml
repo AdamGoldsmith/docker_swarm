@@ -39,6 +39,10 @@ services:
     image: nginx
     ports:
      - 8080:80
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
 
   mysql:
     image: mysql
