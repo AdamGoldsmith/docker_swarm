@@ -10,7 +10,8 @@
   vars:
 
     # Destination of docker compose files on manager nodes
-    docker_compose_dest: /docker/data
+    docker_compose_dest: /docker/compose_files
+    docker_data_dest: /nfs/data
 
   tasks:
 
@@ -97,14 +98,34 @@
     - name: Copy stack compose files to managers
       copy:
         src: "{{ inventory_dir }}/../../stacks/{{ item }}/"
-        dest: "{{ docker_compose_dest }}/stacks/{{ item }}/"
+        dest: "{{ docker_compose_dest }}/{{ item }}/"
         mode: "0640"
       loop: "{{ docker_stack_names | default([]) }}"
       when: not docker_stack_state | default('present') == 'absent'
 
+    - name: Copy stack data files to nfs server
+      copy:
+        src: "{{ inventory_dir }}/../../stacks/test/data/{{ item['src'] }}"
+        dest: "{{ docker_data_dest }}/{{ item['dest'] }}"
+        mode: "0777"
+      delegate_to: nfs-server-1
+      run_once: yes
+      loop:
+        - src: web/nginx.conf
+          dest: web/conf/
+        - src: web/index.html
+          dest: web/html/
+        - src: web/info.php
+          dest: web/html/
+        - src: web/castle.php
+          dest: web/html/
+      when:
+        - not docker_stack_state | default('present') == 'absent'
+        # - logic for stack name not in dict key
+
     - name: Deploy stacks
       vars:
-        prefix: "{{ docker_compose_dest }}/stacks/{{ item }}/"
+        prefix: "{{ docker_compose_dest }}/{{ item }}/"
       docker_stack:
         name: "{{ item }}"
         state: "{{ docker_stack_state | default('present') }}"

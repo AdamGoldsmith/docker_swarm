@@ -30,16 +30,45 @@ services:
           - node.role == worker
     environment:
       STACK_ENV: BASE
-    deploy:
-      placement:
-        constraints:
-          - node.role == worker
 
   web:
     image: nginx
     ports:
      - 8080:80
+    volumes:
+      - type: volume
+        source: nfs-web-conf
+        target: /etc/nginx/conf.d
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs-web-html
+        target: /usr/share/nginx/html
+        volume:
+          nocopy: true
     deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+    depends_on:
+      - php
+
+  php:
+    # image: php:fpm
+    # image: php:7.4-fpm
+    # image: quay.io/ignited/php-nginx-fpm
+    # Note: quay.io images have mysqli pre-installed
+    image: quay.io/ignited/php-nginx-fpm:5.6.30-latest
+    working_dir: /usr/share/nginx/html
+    volumes:
+      - type: volume
+        source: nfs-web-html
+        target: /usr/share/nginx/html
+        volume:
+          nocopy: true
+    deploy:
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -95,6 +124,18 @@ volumes:
       type: nfs
       o: addr=10.1.88.99,nolock,soft,rw
       device: ":/nfs/data"
+  nfs-web-conf:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.1.88.99,nolock,soft,rw
+      device: ":/nfs/data/web/conf"
+  nfs-web-html:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.1.88.99,nolock,soft,rw
+      device: ":/nfs/data/web/html"
   nfs-mariadb:
     driver: local
     driver_opts:

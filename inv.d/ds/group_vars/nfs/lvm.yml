@@ -20,6 +20,18 @@ data_structure:
     owner: nfsnobody
     group: nfsnobody
     mode: "0777"
+  - name: /nfs/data/web
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"
+  - name: /nfs/data/web/conf
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"
+  - name: /nfs/data/web/html
+    owner: nfsnobody
+    group: nfsnobody
+    mode: "0777"
   - name: /nfs/data/mariadb
     owner: nfsnobody
     group: nfsnobody
