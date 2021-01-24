@@ -4,6 +4,7 @@ https://sysadmins.co.za/create-a-docker-persistent-mysql-service-backed-by-nfs/
 
 # SQL demo data
 
+```sql
 create DATABASE Castle;
 USE Castle;
 create TABLE Keep (
@@ -15,8 +16,11 @@ create TABLE Keep (
 );
 INSERT INTO Keep
 VALUES ('Maxstoke', 1345, 253, 1066, 231);
+```
 
+```sql
 UPDATE `Keep` SET `Animals` = 789;
+```
 
 # TODO
 
