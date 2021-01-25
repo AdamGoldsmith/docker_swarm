@@ -18,12 +18,13 @@ INSERT INTO Keep
 VALUES ('Maxstoke', 1345, 253, 1066, 231);
 ```
 
+
 ```sql
-UPDATE `Keep` SET `Animals` = 789;
+UPDATE `Keep` SET `Animals` = 999;
 ```
 
 ```sql
-UPDATE 'Keep' SET 'Animals' = 'Animals' + 1;
+UPDATE `Keep` SET `Animals` = `Animals` + 1;
 ```
 
 # TODO
