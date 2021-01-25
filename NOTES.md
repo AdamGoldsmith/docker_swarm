@@ -22,6 +22,10 @@ VALUES ('Maxstoke', 1345, 253, 1066, 231);
 UPDATE `Keep` SET `Animals` = 789;
 ```
 
+```sql
+UPDATE 'Keep' SET 'Animals' = 'Animals' + 1;
+```
+
 # TODO
 
 * Consider using the `ansible_user` variable defined in `group_vars/all/vars.yml` as the source for the prepare_ansible_targets.sh template
