@@ -23,7 +23,7 @@ services:
         target: /nfs-data
         volume:
           nocopy: true
-    deploy:
+    deploy: &deploy_worker
       replicas: 2
       placement:
         constraints:
@@ -46,11 +46,7 @@ services:
         target: /usr/share/nginx/html
         volume:
           nocopy: true
-    deploy:
-      replicas: 2
-      placement:
-        constraints:
-          - node.role == worker
+    deploy: *deploy_worker
     depends_on:
       - php
 
@@ -67,11 +63,7 @@ services:
         target: /usr/share/nginx/html
         volume:
           nocopy: true
-    deploy:
-      replicas: 2
-      placement:
-        constraints:
-          - node.role == worker
+    deploy: *deploy_worker
 
   mysql:
     image: mysql
@@ -84,9 +76,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=mysql
     deploy:
-      placement:
-        constraints:
-          - node.role == worker
+      <<: *deploy_worker
+      replicas: 1
 
   mariadb:
     image: mariadb
@@ -99,9 +90,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=mariadb
     deploy:
-      placement:
-        constraints:
-          - node.role == worker
+      <<: *deploy_worker
+      replicas: 1
 
   phpadmin:
     image: phpmyadmin
@@ -113,38 +103,33 @@ services:
       - mysql
       - mariadb
     deploy:
-      placement:
-        constraints:
-          - node.role == worker
+      <<: *deploy_worker
+      replicas: 1
 
 volumes:
-  nfs-data:
+  nfs-data: &nfs
     driver: local
-    driver_opts:
+    driver_opts: &d_opts
       type: nfs
       o: addr=10.1.88.99,nolock,soft,rw
       device: ":/nfs/data"
   nfs-web-conf:
-    driver: local
+    <<: *nfs
     driver_opts:
-      type: nfs
-      o: addr=10.1.88.99,nolock,soft,rw
+      <<: *d_opts
       device: ":/nfs/data/web/conf"
   nfs-web-html:
-    driver: local
+    <<: *nfs
     driver_opts:
-      type: nfs
-      o: addr=10.1.88.99,nolock,soft,rw
+      <<: *d_opts
       device: ":/nfs/data/web/html"
   nfs-mariadb:
-    driver: local
+    <<: *nfs
     driver_opts:
-      type: nfs
-      o: addr=10.1.88.99,nolock,soft,rw
+      <<: *d_opts
       device: ":/nfs/data/mariadb"
   nfs-mysql:
-    driver: local
+    <<: *nfs
     driver_opts:
-      type: nfs
-      o: addr=10.1.88.99,nolock,soft,rw
+      <<: *d_opts
       device: ":/nfs/data/mysql"
