@@ -15,16 +15,18 @@ create TABLE Keep (
     Animals int
 );
 INSERT INTO Keep
-VALUES ('Maxstoke', 1345, 253, 1066, 231);
-```
-
-
-```sql
-UPDATE `Keep` SET `Animals` = 999;
+VALUES
+  ('Maxstoke', 1345, 253, 1066, 231),
+  ('Kenilworth', 1120, 427, 5599, 438),
+  ('Warwick', 1068, 2209, 6732, 758);
 ```
 
 ```sql
-UPDATE `Keep` SET `Animals` = `Animals` + 1;
+UPDATE `Keep` SET `Animals` = 999 WHERE `Name` = 'Maxstoke';
+```
+
+```sql
+UPDATE `Keep` SET `Animals` = `Animals` + 1 WHERE `Name` = 'Maxstoke';
 ```
 
 # TODO
