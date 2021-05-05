@@ -6,7 +6,7 @@ docker_version: ""
 docker_pip_packages:
   # Needed for Ansible docker_swarm module
   # https://docs.ansible.com/ansible/latest/collections/community/general/docker_swarm_module.html#requirements
-  - docker
+  - docker<5    # docker 5.0.0 introduced errors so capping it
   # Needed for Ansible docker_stack module
   # https://docs.ansible.com/ansible/latest/collections/community/general/docker_stack_module.html#requirements
   - jsondiff
