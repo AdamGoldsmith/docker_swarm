@@ -1,2 +1,4 @@
 /vagrant
 /scripts/prepare_ansible_targets.sh
+/roles/ansible-role-firewall
+/roles/ansible-role-glusterfs
