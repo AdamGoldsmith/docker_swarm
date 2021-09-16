@@ -1,9 +1,5 @@
 ---
 
-external_roles:
-  - name: ansible-role-firewall
-    source: https://github.com/geerlingguy/ansible-role-firewall.git
-
 firewall_allowed_tcp_ports:
   - 22
   # For Gluster.

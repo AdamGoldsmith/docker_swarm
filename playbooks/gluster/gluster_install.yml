@@ -24,6 +24,7 @@
       delegate_to: localhost
       run_once: yes
       become: no
+      when: repo_item['name'] == 'ansible-role-glusterfs'
 
   tasks:
 

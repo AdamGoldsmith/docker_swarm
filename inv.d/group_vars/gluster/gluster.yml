@@ -1,9 +1,5 @@
 ---
 
-external_roles:
-  - name: ansible-role-glusterfs
-    source: https://github.com/geerlingguy/ansible-role-glusterfs.git
-
 use_lvm: yes
 vg_data:
   - name: glustervg
