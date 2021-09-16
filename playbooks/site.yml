@@ -5,5 +5,7 @@
   connection: local
   gather_facts: no
 
-- import_playbook: nfs/nfs.yml
+- import_playbook: python/python3.yml
+- import_playbook: firewall/firewall.yml
+- import_playbook: gluster/gluster.yml
 - import_playbook: docker/docker.yml

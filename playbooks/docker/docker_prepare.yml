@@ -13,7 +13,3 @@
     - name: Run user preparation role
       include_role:
         name: ansible_role_user_prepare
-
-    - name: Run directory preparation role
-      include_role:
-        name: ansible_role_dir_prepare

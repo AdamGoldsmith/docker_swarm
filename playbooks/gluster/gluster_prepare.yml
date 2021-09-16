@@ -1,0 +1,17 @@
+---
+
+- name: Prepare Gluster
+  hosts: gluster
+  gather_facts: no
+  become: yes
+  tags:
+    - gluster_prepare
+    - gluster
+
+  tasks:
+
+    - name: Run directory preparation role
+      vars:
+        data_structure: "{{ gluster_data_structure }}"
+      include_role:
+        name: ansible_role_dir_prepare

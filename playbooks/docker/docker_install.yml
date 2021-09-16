@@ -2,7 +2,7 @@
 
 - name: Install Docker components
   hosts: docker
-  gather_facts: no
+  gather_facts: yes
   become: yes
   tags:
     - docker_install

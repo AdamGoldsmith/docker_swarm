@@ -11,6 +11,7 @@ Installs and starts docker service by:
 Currently tested on these Operating Systems:
 
 * CentOS 7
+* CentOS 8
 
 ## Requirements
 

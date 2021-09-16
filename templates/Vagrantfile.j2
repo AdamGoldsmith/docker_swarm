@@ -14,7 +14,7 @@ INSTALL_GUEST_ADDITIONS = {{ vagrant_guest_additions | default(false) | bool | l
 SSH_PUB_KEY="id_rsa.pub"
 
 servers=[
-{% for host in groups['docker'] + groups['nfs'] %}
+{% for host in groups['docker'] %}
   {
     :hostname => "{{ host + vagrant_domain | default('') }}",
     :ip => "{{ hostvars[host]['ansible_host'] }}",

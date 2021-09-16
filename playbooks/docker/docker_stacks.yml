@@ -1,5 +1,8 @@
 ---
 
+# TODO: NEEDS CONVERTING TO USE NEW GLUSTER MOUNTS :-)
+# TODO: NEEDS CONVERTING TO USE NEW GLUSTER MOUNTS :-)
+
 - name: Deploy Docker Swarm stacks
   hosts: docker_manager
   gather_facts: no

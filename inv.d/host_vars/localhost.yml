@@ -1,6 +1,9 @@
 ---
 
-vagrant_box_version: "centos/7"
+# TODO: Remove python interpreter lines if python 3 stuff all works
+# ansible_python_interpreter: auto_legacy
+ansible_python_interpreter: "{{ ansible_playbook_python }}"
+vagrant_box_version: "centos/8"
 vagrant_guest_additions: False
 vagrant_domain: ""
 vagrant_script_check: True

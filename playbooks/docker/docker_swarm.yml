@@ -24,6 +24,8 @@
 
   vars:
 
+    # TODO: Consider removing the docker_swarm_network var from here..
+    # .. needs further investigation
     # Set in group/host vars, or uncomment & amend to use local variables
     # docker_swarm_network: '0.0.0.0/0'
 

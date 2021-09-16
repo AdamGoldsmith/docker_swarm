@@ -1,6 +1,19 @@
 version: '3.7'
 
 services:
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000/tcp"
+    volumes:
+      - type: volume
+        source: nfs-reg
+        target: /var/lib/registry
+    deploy: &deploy_manager
+      placement:
+        constraints:
+          - node.role == manager
+
   viz:
     image: dockersamples/visualizer
     ports:
@@ -9,10 +22,7 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
+    deploy: *deploy_manager
 
   nfs:
     image: alpine:latest
@@ -113,6 +123,11 @@ volumes:
       type: nfs
       o: addr=10.1.88.99,nolock,soft,rw
       device: ":/nfs/data"
+  nfs-reg:
+    <<: *nfs
+    driver_opts:
+      <<: *d_opts
+      device: ":/nfs/data/registry"
   nfs-web-conf:
     <<: *nfs
     driver_opts:

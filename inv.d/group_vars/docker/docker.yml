@@ -1,0 +1,33 @@
+---
+
+docker_user: docker
+
+group_data:
+  - name: "{{ docker_user }}"
+    gid: 10100
+
+user_data:
+  - name: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    comment: Docker service user
+    expires: -1
+    home: "/home/{{ docker_user }}"
+    shell: /bin/false
+    uid: 10100
+
+sudo_groups:
+  - "{{ docker_user }}"
+
+# Look through all the available network adapters and
+# filter out the one that matches the 'ansible_host' ip
+# Once found, grab all the netowrk info, eg . address, network, netmask, etc
+net_data: "{{ ansible_facts | dict2items |
+  selectattr('key', 'in', ansible_facts.interfaces) |
+  selectattr('value.ipv4', 'defined') |
+  selectattr('value.ipv4.address', 'equalto', ansible_host) |
+  map(attribute='value.ipv4') | list | first }}"
+net_mask: "{{ net_data['network'] }}/{{ net_data['netmask'] }}"
+# Use CIDR notation of host's network ip + netmask
+docker_swarm_network: "{{ net_mask | ipaddr('net') }}"
+# Or overide with static entry by uncommenting and using below instead
+# docker_swarm_network: '10.10.88.0/24'

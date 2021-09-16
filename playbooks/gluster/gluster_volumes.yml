@@ -1,0 +1,41 @@
+---
+
+- name: Create GlusterFS volumes
+  hosts: gluster
+  gather_facts: yes
+  become: yes
+  tags:
+    - gluster_volumes
+    - gluster
+
+  pre_tasks:
+
+  tasks:
+
+    - name: Create list of gluster IP addresses
+      set_fact:
+        cluster_ips: "{{ cluster_ips | default([]) + [
+          hostvars[item]['ansible_host'] ] }}"
+      loop: "{{ groups['gluster'] }}"
+
+    - name: Configure Gluster volumes
+      gluster_volume:
+        state: present
+        name: "{{ item['name'] }}"
+        brick: "/gluster/bricks/{{ item['name'] }}"
+        replicas: "{{ item['replicas'] | default (groups['gluster'] | length) }}"
+        cluster: "{{ cluster_ips | join(',') }}"
+        host: "{{ ansible_host }}"
+      run_once: true
+      loop: "{{ gluster_volumes | default([]) }}"
+
+    - name: Ensure Gluster volume is mounted
+      mount:
+        name: "{{ item['mount'] }}"
+        src: "{{ ansible_host }}:/{{ item['name'] }}"
+        fstype: glusterfs
+        opts: "defaults,_netdev"
+        state: mounted
+      loop: "{{ gluster_volumes | default([]) }}"
+
+    # TODO: At this point, the permissions on the mount point may have changed - needs fixing

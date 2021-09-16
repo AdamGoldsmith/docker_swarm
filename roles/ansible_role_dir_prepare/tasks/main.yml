@@ -16,6 +16,7 @@
       loop_control:
         loop_var: vg
         label: "{{ vg['name'] }}"
+      register: create_vg
       tags:
         - molecule-notest
 
@@ -28,6 +29,8 @@
       loop_control:
         loop_var: vg
         label: "{{ vg[0]['name'] }} : {{ vg[1]['name'] }}"
+      register: create_lv
+      when: not (create_vg is changed and ansible_check_mode)
       tags:
         - molecule-notest
 
@@ -41,6 +44,7 @@
         loop_var: vg
         label: "{{ vg[0]['name'] }} : {{ vg[1]['name'] }}"
       register: fs_out
+      when: not ansible_check_mode
       tags:
         - molecule-notest
 

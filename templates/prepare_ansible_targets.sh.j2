@@ -43,10 +43,10 @@ do
   [[ ! -e "${keyfile}" ]] && echo "No key file (${keyfile}) detected, exiting" && exit 1
 done
 
-run_ansible "docker,nfs" "${connect_user}" "${connect_user_privkey_file}" "user" "name=${ansible_user} state=present create_home=yes uid=${ansible_user_uid}"
-run_ansible "docker,nfs" "${connect_user}" "${connect_user_privkey_file}" "authorized_key" "user=${ansible_user} state=present key={{ lookup('file', '${ansible_user_pubkey_file}') }}"
-run_ansible "docker,nfs" "${connect_user}" "${connect_user_privkey_file}" "lineinfile" "path=/etc/sudoers line='${ansible_user} ALL=(ALL) NOPASSWD: ALL'"
+run_ansible "docker" "${connect_user}" "${connect_user_privkey_file}" "user" "name=${ansible_user} state=present create_home=yes uid=${ansible_user_uid}"
+run_ansible "docker" "${connect_user}" "${connect_user_privkey_file}" "authorized_key" "user=${ansible_user} state=present key={{ lookup('file', '${ansible_user_pubkey_file}') }}"
+run_ansible "docker" "${connect_user}" "${connect_user_privkey_file}" "lineinfile" "path=/etc/sudoers line='${ansible_user} ALL=(ALL) NOPASSWD: ALL'"
 
 # Confirm newly added user works
-[[ "${check:-0}" -eq 0 ]] && run_ansible "docker,nfs" "${ansible_user}" "${connect_user_privkey_file}" "user" "user=${ansible_user}"
+[[ "${check:-0}" -eq 0 ]] && run_ansible "docker" "${ansible_user}" "${connect_user_privkey_file}" "user" "user=${ansible_user}"
 {% endraw %}

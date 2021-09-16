@@ -1,0 +1,11 @@
+---
+
+- name: Manage Gluster deployment
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+
+- import_playbook: gluster_install.yml
+- import_playbook: gluster_prepare.yml
+- import_playbook: gluster_volumes.yml

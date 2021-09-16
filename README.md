@@ -64,6 +64,7 @@ When run with default options, the following tasks will be applied in this order
 | Platform | Version |
 |----------|---------|
 | CentOS   | 7       |
+| CentOS   | 8       |
 
 ## Requirements
 

@@ -1,0 +1,29 @@
+---
+
+external_roles:
+  - name: ansible-role-glusterfs
+    source: https://github.com/geerlingguy/ansible-role-glusterfs.git
+
+use_lvm: yes
+vg_data:
+  - name: glustervg
+    disks:
+      - /dev/sdb
+    lvs:
+      - name: "gv_lv"
+        size: "{{ vagrant_disk | default(10240) | int - 512 }}"
+        mount: "/gluster"
+        type: xfs
+
+gluster_data_structure:
+  - name: "/gluster"
+    mode: "0775"
+  - name: "/gluster/bricks"
+    mode: "0775"
+  - name: "/gmount01"
+    mode: "0777"
+
+gluster_volumes:
+  - name: glv01
+    mount: /gmount01
+    # replicas: 2

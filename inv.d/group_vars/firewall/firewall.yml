@@ -1,0 +1,30 @@
+---
+
+external_roles:
+  - name: ansible-role-firewall
+    source: https://github.com/geerlingguy/ansible-role-firewall.git
+
+firewall_allowed_tcp_ports:
+  - 22
+  # For Gluster.
+  - 111
+  # Port-mapper for Gluster 3.4+.
+  - 2049
+  # For Docker Swarm
+  - 2377
+  # For glusterd
+  - 24007
+  # For glusterd RDMA port management
+  - 24008
+  # For glustereventsd
+  - 24009
+  # For gluster bricks (need one port for brick, not per volume; default to 10; change to suit)
+  # - "49152-49161"
+  - 49152
+  - 49153
+  - 49154
+  # "{{ lookup('sequence', 'start=10 count=3').split(',') }}"
+  - 24009
+  - 24010
+  - 24011
+  - 24012

@@ -1,0 +1,33 @@
+---
+
+- name: Install GlusterFS components
+  hosts: gluster
+  gather_facts: yes
+  become: yes
+  tags:
+    - gluster_install
+    - gluster
+
+  pre_tasks:
+
+    - name: Clone external roles
+      git:
+        repo: "{{ repo_item['source'] }}"
+        dest: "{{ inventory_dir | default(ansible_inventory_sources[0]) }}\
+          /../roles/{{ repo_item['name'] }}"
+        clone: yes
+        version: "{{ repo_item['version'] | default(omit) }}"
+      register: git_clone
+      loop: "{{ external_roles }}"
+      loop_control:
+        loop_var: repo_item
+      delegate_to: localhost
+      run_once: yes
+      become: no
+
+  tasks:
+
+    - name: Run GlusterFS installation role
+      include_role:
+        name: ansible-role-glusterfs
+      when: not (git_clone is changed and ansible_check_mode)

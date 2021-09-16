@@ -1,0 +1,7 @@
+---
+
+# TODO: Remove python interpreter lines if python 3 stuff all works
+#ansible_python_interpreter: /usr/bin/python
+# ansible_python_interpreter: auto_legacy
+ansible_user: ansible
+verbosity_level: 0
