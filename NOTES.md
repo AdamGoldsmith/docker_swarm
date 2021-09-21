@@ -31,6 +31,5 @@ UPDATE `Keep` SET `Animals` = `Animals` + 1 WHERE `Name` = 'Maxstoke';
 
 # TODO
 
-* Consider using the `ansible_user` variable defined in `group_vars/all/vars.yml` as the source for the prepare_ansible_targets.sh template
 * Couldn't get mysqldb to work with mysqli connection - character set issues. Mariadb works fine though :-)
 
