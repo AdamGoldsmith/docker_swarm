@@ -2,10 +2,6 @@
 
 docker_user: docker
 
-group_data:
-  - name: "{{ docker_user }}"
-    gid: 10100
-
 user_data:
   - name: "{{ docker_user }}"
     group: "{{ docker_user }}"
@@ -14,6 +10,10 @@ user_data:
     home: "/home/{{ docker_user }}"
     shell: /bin/false
     uid: 10100
+
+group_data:
+  - name: "{{ docker_user }}"
+    gid: 10100
 
 sudo_groups:
   - "{{ docker_user }}"
@@ -29,5 +29,10 @@ net_data: "{{ ansible_facts | dict2items |
 net_mask: "{{ net_data['network'] }}/{{ net_data['netmask'] }}"
 # Use CIDR notation of host's network ip + netmask
 docker_swarm_network: "{{ net_mask | ipaddr('net') }}"
-# Or overide with static entry by uncommenting and using below instead
-# docker_swarm_network: '10.10.88.0/24'
+# Or override with static entry by uncommenting and using below instead
+# docker_swarm_network: '10.11.12.0/24'
+# Override docker swarm port by uncommenting and using below
+# docker_swarm_port: 2377
+
+local_stacks_dir: "{{ inventory_dir }}/../stacks"
+ds_data_path: /gmount01/docker

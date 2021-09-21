@@ -6,8 +6,8 @@ services:
     ports:
       - "5000:5000/tcp"
     volumes:
-      - type: volume
-        source: nfs-reg
+      - type: bind
+        source: /gmount01/docker/stacks/test/data/registry
         target: /var/lib/registry
     deploy: &deploy_manager
       placement:
@@ -24,65 +24,41 @@ services:
         target: /var/run/docker.sock
     deploy: *deploy_manager
 
-  nfs:
-    image: alpine:latest
-    command: ash -c "echo \"$$(date) - $${STACK_ENV:-BASE} $$(hostname)\" | tee -a /nfs-data/hosts.out; while true; do sleep 10; done"
+  web:
+    image: nginx
+    ports:
+     - "8080:80"
     volumes:
-      - type: volume
-        source: nfs-data
-        target: /nfs-data
-        volume:
-          nocopy: true
+      - type: bind
+        source: /gmount01/docker/stacks/test/data/web/conf
+        target: /etc/nginx/conf.d
+      - type: bind
+        source: /gmount01/docker/stacks/test/data/web/html
+        target: /usr/share/nginx/html
     deploy: &deploy_worker
       replicas: 2
       placement:
         constraints:
           - node.role == worker
-    environment:
-      STACK_ENV: BASE
-
-  web:
-    image: nginx
-    ports:
-     - 8080:80
-    volumes:
-      - type: volume
-        source: nfs-web-conf
-        target: /etc/nginx/conf.d
-        volume:
-          nocopy: true
-      - type: volume
-        source: nfs-web-html
-        target: /usr/share/nginx/html
-        volume:
-          nocopy: true
-    deploy: *deploy_worker
     depends_on:
       - php
 
   php:
-    # image: php:fpm
-    # image: php:7.4-fpm
-    # image: quay.io/ignited/php-nginx-fpm
     # Note: quay.io images have mysqli pre-installed
     image: quay.io/ignited/php-nginx-fpm:5.6.30-latest
     working_dir: /usr/share/nginx/html
     volumes:
-      - type: volume
-        source: nfs-web-html
+      - type: bind
+        source: /gmount01/docker/stacks/test/data/web/html
         target: /usr/share/nginx/html
-        volume:
-          nocopy: true
     deploy: *deploy_worker
 
   mysql:
     image: mysql
     volumes:
-      - type: volume
-        source: nfs-mysql
+      - type: bind
+        source: /gmount01/docker/stacks/test/data/mysql
         target: /var/lib/mysql
-        volume:
-          nocopy: true
     environment:
       - MYSQL_ROOT_PASSWORD=mysql
     deploy:
@@ -92,11 +68,9 @@ services:
   mariadb:
     image: mariadb
     volumes:
-      - type: volume
-        source: nfs-mariadb
+      - type: bind
+        source: /gmount01/docker/stacks/test/data/mariadb
         target: /var/lib/mysql
-        volume:
-          nocopy: true
     environment:
       - MYSQL_ROOT_PASSWORD=mariadb
     deploy:
@@ -106,7 +80,7 @@ services:
   phpadmin:
     image: phpmyadmin
     ports:
-      - 8081:80
+      - "8081:80"
     environment:
       - PMA_ARBITRARY=1
     depends_on:
@@ -115,36 +89,3 @@ services:
     deploy:
       <<: *deploy_worker
       replicas: 1
-
-volumes:
-  nfs-data: &nfs
-    driver: local
-    driver_opts: &d_opts
-      type: nfs
-      o: addr=10.1.88.99,nolock,soft,rw
-      device: ":/nfs/data"
-  nfs-reg:
-    <<: *nfs
-    driver_opts:
-      <<: *d_opts
-      device: ":/nfs/data/registry"
-  nfs-web-conf:
-    <<: *nfs
-    driver_opts:
-      <<: *d_opts
-      device: ":/nfs/data/web/conf"
-  nfs-web-html:
-    <<: *nfs
-    driver_opts:
-      <<: *d_opts
-      device: ":/nfs/data/web/html"
-  nfs-mariadb:
-    <<: *nfs
-    driver_opts:
-      <<: *d_opts
-      device: ":/nfs/data/mariadb"
-  nfs-mysql:
-    <<: *nfs
-    driver_opts:
-      <<: *d_opts
-      device: ":/nfs/data/mysql"

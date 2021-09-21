@@ -12,11 +12,14 @@
 
   tasks:
 
-    - name: Create list of gluster IP addresses
+    - name: Create list of Gluster addresses
+      vars:
+        address: "{{ hostvars[item]['ansible_host'] }}"
       set_fact:
-        cluster_ips: "{{ cluster_ips | default([]) + [
-          hostvars[item]['ansible_host'] ] }}"
+        cluster_ips: "{{ cluster_ips | default([]) + [address] }}"
       loop: "{{ groups['gluster'] }}"
+      loop_control:
+        label: "{{ address }}"
 
     - name: Configure Gluster volumes
       gluster_volume:

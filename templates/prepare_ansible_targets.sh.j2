@@ -30,11 +30,11 @@ function run_ansible {
   # -u doesn't override inventory-sourced connection user, using -e ansible_user=xxx instead
   if [[ "${check:-0}" -ne 0 ]]
   then
-    echo "Running: ansible ${1} -i ${inventory} -e ansible_user=${2} --private-key ${3} -b -m ${4} -a ${5}" --check
-    ansible -v "${1}" -i "${inventory}" -e "ansible_user=${2}" --private-key "${3}" -b -m "${4}" -a "${5}" --check
+    echo "Running: ansible ${1} -i ${inventory} -e ansible_user=${2} --private-key ${3} -b -m ${4} -a ${5}" -v --check
+    ansible "${1}" -i "${inventory}" -e "ansible_user=${2}" --private-key "${3}" -b -m "${4}" -a "${5}" -v --check
   else
-    echo "Running: ansible ${1} -i ${inventory} -e ansible_user=${2} --private-key ${3} -b -m ${4} -a ${5}"
-    ansible -v "${1}" -i "${inventory}" -e "ansible_user=${2}" --private-key "${3}" -b -m "${4}" -a "${5}"
+    echo "Running: ansible ${1} -i ${inventory} -e ansible_user=${2} --private-key ${3} -b -m ${4} -a ${5}" -v
+    ansible "${1}" -i "${inventory}" -e "ansible_user=${2}" --private-key "${3}" -b -m "${4}" -a "${5}" -v
   fi
 }
 

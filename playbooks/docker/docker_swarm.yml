@@ -22,13 +22,6 @@
     - swarm_worker
     - swarm
 
-  vars:
-
-    # TODO: Consider removing the docker_swarm_network var from here..
-    # .. needs further investigation
-    # Set in group/host vars, or uncomment & amend to use local variables
-    # docker_swarm_network: '0.0.0.0/0'
-
   tasks:
 
     - name: Set Docker swarm address
@@ -65,12 +58,13 @@
 
     - name: Initialise a new swarm with default parameters
       vars:
+        ansible_python_interpreter: /usr/bin/python3
         adv_addr: "{{ hostvars['localhost']['docker_swarm_addr'] }}"
       docker_swarm:
         state: present
         advertise_addr: "{{ adv_addr }}"
         listen_addr: "{{ adv_addr }}:{{ docker_swarm_port |
-          default(default_docker_swarm_port)}}"
+          default(default_docker_swarm_port) }}"
       register: swarm_info
       run_once: yes
 
@@ -88,12 +82,12 @@
     # Mimic role default vars - playbook vars outweigh host/group vars
     # Use these default vars only if no overiding vars are applied
     default_docker_swarm_port: 2377
-    # Set in group/host vars, or uncomment & amend to use local variables
-    # docker_swarm_network: '10.1.88.0/24'
 
   tasks:
 
     - name: Check swarm status on manager
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
       docker_swarm_info:
       ignore_errors: yes
       register: swarm_info
@@ -107,6 +101,7 @@
 
     - name: Add Docker swarm worker nodes
       vars:
+        ansible_python_interpreter: /usr/bin/python3
         adv_addr: "{{ hostvars['localhost']['docker_swarm_addr'] }}"
         c_token: "{{ swarm_info['swarm_facts']['JoinTokens']['Worker'] }}"
       docker_swarm:

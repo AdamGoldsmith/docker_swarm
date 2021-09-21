@@ -1,13 +1,12 @@
 ---
 
 firewall_allowed_tcp_ports:
+  # SSH
   - 22
   # For Gluster.
   - 111
   # Port-mapper for Gluster 3.4+.
   - 2049
-  # For Docker Swarm
-  - 2377
   # For glusterd
   - 24007
   # For glusterd RDMA port management
@@ -24,3 +23,21 @@ firewall_allowed_tcp_ports:
   - 24010
   - 24011
   - 24012
+  # Secure Docker client communication
+  - 2376
+  # Docker Swarm manager node communications
+  - 2377
+  # Container network discovery
+  - 7946
+  # For Docker Swarm services
+  - 80
+  - 5000
+  - 8080
+  - 8081
+  - 8088
+
+firewall_allowed_udp_ports:
+  # Container network discovery
+  - 7946
+  # Container ingress networking
+  - 4789

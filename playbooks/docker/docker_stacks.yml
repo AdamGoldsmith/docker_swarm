@@ -1,144 +1,154 @@
 ---
 
-# TODO: NEEDS CONVERTING TO USE NEW GLUSTER MOUNTS :-)
-# TODO: NEEDS CONVERTING TO USE NEW GLUSTER MOUNTS :-)
-
 - name: Deploy Docker Swarm stacks
   hosts: docker_manager
   gather_facts: no
   become: yes
+  run_once: yes
   tags:
     - docker_stacks
 
-  vars:
-
-    # Destination of docker compose files on manager nodes
-    docker_compose_dest: /docker/compose_files
-    docker_data_dest: /nfs/data
-
   tasks:
 
-    - name: Block to create list of stacks if not supplied
-      block:
+    - name: Find local stack directories
+      find:
+        paths: "{{ local_stacks_dir }}"
+        depth: 1
+        file_type: directory
+        patterns: "{{ docker_stack_names | default('*') }}"
+      delegate_to: localhost
+      register: find_stack_names
 
-        - name: Find list of stacks
-          find:
-            paths: "{{ inventory_dir }}/../../stacks"
-            depth: 1
-            file_type: directory
-          delegate_to: localhost
-          register: find_stack_names
-
-        - name: Create list of stacks
-          set_fact:
-            docker_stack_names: "{{ find_stack_names['files'] |
-              map(attribute='path') | map('basename') | list }}"
-
-      when: not docker_stack_names | default([]) | length
-
-    - name: Debug Docker Stack names
+    - name: Display found stack directories
       debug:
-        var: docker_stack_names
+        var: find_stack_names['files'] | map(attribute='path') |
+          map('basename') | list
         verbosity: "{{ verbosity_level | default(1) }}"
 
-    - name: Find stack compose files
+    - name: Create list of valid Docker stacks
+      set_fact:
+        ds_stacks: "{{ find_stack_names['files'] |
+          map(attribute='path') | map('basename') | list }}"
+
+    - name: Display valid Docker stacks
+      debug:
+        var: ds_stacks
+        verbosity: "{{ verbosity_level | default(1) }}"
+
+    - name: Manage shared stack directories
+      file:
+        path: "{{ ds_data_path }}/stacks/{{ item }}"
+        state: "{{ docker_stack_state | default('directory') }}"
+        owner: "{{ docker_user }}"
+        group: "{{ docker_user }}"
+        mode: 0775
+      loop: "{{ ds_stacks }}"
+
+    # Owing to an selinux context issue when copying directly to GlusterFS
+    # mountpoints, this block copies to a temp dir before synchronsing to GFS
+    # so we can maintain file ownerships
+    - name: Docker data transfer block
+      block:
+
+        - name: Create temporary base directory
+          tempfile:
+            prefix: ds_data_
+            state: directory
+          register: tmp_ds_data
+
+        - name: Copy docker stack files to temp directories
+          copy:
+            src: "{{ local_stacks_dir }}/{{ item }}/"
+            dest: "{{ tmp_ds_data['path'] }}/stacks/{{ item }}/"
+            owner: "{{ docker_user }}"
+            group: "{{ docker_user }}"
+            mode: 0775
+          loop: "{{ ds_stacks }}"
+
+        - name: Create base docker stack directories on gluster storage
+          file:
+            path: "{{ ds_data_path }}/stacks/{{ item }}"
+            state: directory
+            owner: "{{ docker_user }}"
+            group: "{{ docker_user }}"
+            mode: 0775
+          loop: "{{ ds_stacks }}"
+
+        - name: Synchronise docker stack files to gluster storage
+          synchronize:
+            src: "{{ tmp_ds_data['path'] }}/stacks/{{ item }}/"
+            dest: "{{ ds_data_path }}/stacks/{{ item }}/"
+            delete: yes
+            times: no
+          delegate_to: "{{ ansible_play_hosts[0] }}"
+          loop: "{{ ds_stacks }}"
+
+      always:
+
+        - name: Remove temporary base directory
+          file:
+            path: "{{ tmp_ds_data['path'] }}"
+            state: absent
+
+      when: not docker_stack_state | default('present') == 'absent'
+
+    - name: Find remote stack compose files
       find:
-        paths: "{{ inventory_dir }}/../../stacks/{{ item }}"
-        pattern: "docker-compose*.yml"
+        paths: "{{ ds_data_path }}/stacks/{{ item }}"
+        pattern: "docker-compose*.y*ml"
         depth: 1
         file_type: file
-      run_once: yes
-      delegate_to: localhost
-      loop: "{{ docker_stack_names | default([]) }}"
+      loop: "{{ ds_stacks }}"
       register: find_compose_files
 
     - name: Store list of available compose files for every stack
-      vars:
-        # Set list of compose file search criteria
-        layers:
-          - "docker-compose.yml"
-          - "docker-compose-{{ docker_stack_env | default('prod') }}.yml"
       set_fact:
         # OK, what is going on here?
-        # docker_compose_files : a dictionary of lists
+        # docker_compose_files: : a dictionary of lists
         # docker_compose_files | default({}) : Create empty dict on first loop
         # combine() : append key:value to dictionary
-        # item[0]: : use stack name as key
-        # docker_compose_files[item[0]] | default([]) : Use the existing
+        # item: : use stack name as key
+        # docker_compose_files[item] | default([]) : Use the existing
         # contents of the key's value - default to empty list on first occurence
         # find_compose_files['results'] : contents of above find task results
-        # selectattr('item', 'equalto', item[0]) : filter by stack name
+        # selectattr('item', 'equalto', item) : filter by stack name
         # map(attribute='files') : grab the 'files' dictionaries
-        # selectattr('path', 'contains', item[1]) : filter only paths that
-        # contain the compose file search criterion
+        # selectattr('path', 'match', '^docker-compose.*ya?ml$') : filter only
+        # paths that match the compose file regex
         # map(attribute='path') : grab the 'path' value
         # list | first : map creates a list, so get first (and only) element
         docker_compose_files: "{{ docker_compose_files | default({}) | combine(
-          { item[0]: docker_compose_files[item[0]] | default([]) +
-            [ find_compose_files['results'] |
-              selectattr('item', 'equalto', item[0]) | list |
-              map(attribute='files') | list | flatten |
-              selectattr('path', 'contains', item[1]) | list |
-              map(attribute='path') | list | first
-            ]
+          { item: docker_compose_files[item] | default([]) +
+            find_compose_files['results'] |
+            selectattr('item', 'equalto', item) | list |
+            map(attribute='files') | list | flatten |
+            selectattr('path', 'match', '.*docker-compose.*ya?ml$') | list |
+            map(attribute='path') | list
           }
         ) }}"
-      # item[0] : stack name
-      # item[1] : compose file search criterion
-      loop: "{{ docker_stack_names | product(layers) | list }}"
+      loop: "{{ ds_stacks }}"
       # Only append to fact when the compose file exists
       when: find_compose_files['results'] |
-              selectattr('item', 'equalto', item[0]) | list |
+              selectattr('item', 'equalto', item) | list |
               map(attribute='files') | list | flatten |
-              selectattr('path', 'contains', item[1]) | list |
+              selectattr('path', 'match', '.*docker-compose.*ya?ml$') | list |
               map(attribute='path') | list | length
 
     - name: Debug available compose files
       debug:
-        var: docker_compose_files
+        var: docker_compose_files[item] | sort| reverse
         verbosity: "{{ verbosity_level | default(1) }}"
-
-    - name: Copy stack compose files to managers
-      copy:
-        src: "{{ inventory_dir }}/../../stacks/{{ item }}/"
-        dest: "{{ docker_compose_dest }}/{{ item }}/"
-        mode: "0640"
-      loop: "{{ docker_stack_names | default([]) }}"
-      when: not docker_stack_state | default('present') == 'absent'
-
-    - name: Copy stack data files to nfs server
-      copy:
-        src: "{{ inventory_dir }}/../../stacks/test/data/{{ item['src'] }}"
-        dest: "{{ docker_data_dest }}/{{ item['dest'] }}"
-        mode: "0777"
-      delegate_to: nfs-server-1
-      run_once: yes
-      loop:
-        - src: web/nginx.conf
-          dest: web/conf/
-        - src: web/index.html
-          dest: web/html/
-        - src: web/info.php
-          dest: web/html/
-        - src: web/castle.php
-          dest: web/html/
-      when:
-        - not docker_stack_state | default('present') == 'absent'
-        # - logic for stack name not in dict key
+      loop: "{{ ds_stacks }}"
 
     - name: Deploy stacks
       vars:
-        prefix: "{{ docker_compose_dest }}/{{ item }}/"
+        ansible_python_interpreter: /usr/bin/python3
       docker_stack:
         name: "{{ item }}"
         state: "{{ docker_stack_state | default('present') }}"
-        # Append prefix to all elements of docker_compose_files[item] after
-        # stripping the path from the filename
-        compose: "{{ [prefix] | product(docker_compose_files[item] |
-          map('basename')) | map('join') | list }}"
+        compose: "{{ docker_compose_files[item] | default([]) | sort| reverse }}"
         prune: "{{ docker_stack_prune | default(False) | bool }}"
-      run_once: yes
-      loop: "{{ docker_stack_names | default([]) }}"
+      loop: "{{ ds_stacks | default([]) }}"
       register: deploy_stacks
 
     - name: Debug deploy_stacks

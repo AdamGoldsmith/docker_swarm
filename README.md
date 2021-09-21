@@ -1,6 +1,6 @@
 # Docker Swarm deployment using Ansible & Vagrant
 
-Collection of playbooks and roles to prepare and deploy hosts to run in a Docker swarm development/test cluster. Backend storage uses NFS which is not ideal for production environments but is a good start for testing persistent storage across nodes. A playbook is supplied to create a Vagrantfile from the Ansible inventory for creating an infrastructure using the VirtualBox hypervisor.
+Collection of playbooks and roles to prepare and deploy hosts to run in a Docker swarm development/test cluster. Backend storage uses GlusterFS which is ideal in production environments for persistent storage across nodes. A playbook is supplied to create a Vagrantfile from the Ansible inventory for creating an infrastructure using the VirtualBox hypervisor.
 
 ## TL;DR
 
@@ -11,24 +11,30 @@ From root directory of repo:
 1. `cd vagrant; vagrant up; cd ..`
 1. `./scripts/prepare_ansible_targets.sh`
 1. `ansible-playbook playbooks/site.yml`
-1. Point browser at http://10.1.88.11:8088 to access [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
-1. Point browser at http://10.1.88.11:8081 to access [phpmyadmin](https://www.phpmyadmin.net)
-1. Point browser at http://10.1.88.11:8080 to access [nginx](https://www.nginx.com)
+1. Point browser at http://10.11.12.11:8088 to access [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
+1. Point browser at http://10.11.12.11:8081 to access [phpmyadmin](https://www.phpmyadmin.net)
+1. Point browser at http://10.11.12.11:8080 to access [nginx](https://www.nginx.com)
 
 ## Overview of architecture
 
-__Note:__ Following diagram shows the infrastructure used on developer's machine
+__Note:__ Following diagram shows a representation of the deployed infrastructure
 
 ![Architecture overview](images/architecture.png?raw=true "Title")
 
 __Note:__ Following Google Slides deck overviews the deployment on the developer's machine
 
-[Deployment presentataion](https://docs.google.com/presentation/d/e/2PACX-1vTpLys-ebd64XQukHPi2h0sZwDVL-d3ySr-UN9sRloqagIZxHXGerfV7ZbvnLK2ZH1XL-skRm_46eQj/pub?start=false&loop=false&delayms=5000)
+[Deployment presentataion](https://docs.google.com/presentation/d/e/2PACX-1vRZIxsDLc6ltGR6pgmuq7ldWOj8fI9vT54zi7uCcQfz35KPs5n-Atqp2xOTMZ2IS4TtcofueKL2416U/pub?start=false&loop=false&delayms=5000)
 
 ## Overview of tasks
 
-When run with default options, the following tasks will be applied in this order. Each main task can be run by supplying `--tags` - see [here](#running-the-deployment) for details.
+When `site.yml` is run with default options, the following tasks will be applied in this order. Each main task can be run by supplying `--tags` - see [here](#running-the-deployment) for details.
 
+1. Install python3 on docker target hosts (required for the pip3 docker SDK package)
+1. Prepare firewall on docker target hosts as ports will be unavailable by default on CentOS 8. (Uses external Geerlingguy firewall role)
+1. Configure GlusterFS on docker target hosts
+    1. Install & configure GlusterFS (Uses external Geerlingguy glusterfs role)
+    1. Prepare gluster directories
+    1. Create gluster volumes
 1. Preparing the hosts for Docker installation (Managed by the roles `ansible_role_user_prepare` & `ansible_role_dir_prepare`)
     1. Creating groups & users
     1. Configuring sudo access
@@ -46,25 +52,27 @@ When run with default options, the following tasks will be applied in this order
     1. Install pip Docker software to enable Ansible to manage Docker
     1. Configure Docker swarm manager
     1. Join Docker swarm workers to cluster
-1. Deploy Docker swarm stacks on Docker manager node (Managed by the playbook `docker_stacks`)
+1. Deploy Docker swarm stacks on Docker Swarm manager node (Managed by the playbook `docker_stacks`)
     1. Identify docker stacks (if not specified)
-    1. Copy docker-compose files to Docker manager node
-    1. Create and run Docker stacks
+    1. Synchronise docker-compose files to Docker Swarm manager node
+    1. Create and run Docker Swarm stacks
 
 ##  Default `test` stack services
 
+* [registry](https://hub.docker.com/_/registry)
 * [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
+* [web](https://hub.docker.com/_/nginx)
+* [php](https://quay.io/repository/ignited/php-nginx-fpm)
 * [phpmyadmin](https://www.phpmyadmin.net)
 * [mysql](https://www.mysql.com)
 * [mariadb](https://mariadb.org)
-* nfs - Test Linux Alpine image that writes hostname & environment to `hosts.out` file on NFS
 
 ## Supported platforms
 
-| Platform | Version |
-|----------|---------|
-| CentOS   | 7       |
-| CentOS   | 8       |
+| Platform | Version | Default |
+|----------|---------|---------|
+| CentOS   | 7       |         |
+| CentOS   | 8       | Yes     |
 
 ## Requirements
 
@@ -74,44 +82,62 @@ When run with default options, the following tasks will be applied in this order
 * Vagrant (__*optional*__) (tested with 2.2.6)
 * Python3 (__*optional*__) (for creating a virtual env using supplied utility script)
 
-## Inventory directories
+## Inventory
 
-The inventories live under the main `inv.d` directory. An inventory called `ds` is supplied in this repo and should work straight out of the box when deploying the infrastructure and the Docker stacks. Additional inventory directory structures should be used for different environments, eg `dev`, `test`. This Ansible configuration has been setup to use `inv.d/ds` by default in `ansible.cfg`. This can be changed, or overridden as shown later in the README.
+The inventory lives under the main `inv.d` directory. The inventory in this repo should work straight out of the box when deploying the infrastructure and the Docker Swarm stacks. This Ansible configuration has been setup to use `inv.d` by default in `ansible.cfg`.
 
-The following example shows the supplied environment inventory in `inv.d/ds/inventory`
+The following example shows the supplied environment inventory in `inv.d/inventory`
 
 ```ini
 localhost ansible_host=127.0.0.1 ansible_connection=local
 
 [docker_manager]
-ds-node-1 ansible_host=10.1.88.11
+ds-node-1 ansible_host=10.11.12.11
 
 [docker_worker]
-ds-node-2 ansible_host=10.1.88.12
-ds-node-3 ansible_host=10.1.88.13
-ds-node-4 ansible_host=10.1.88.14
+ds-node-2 ansible_host=10.11.12.12
+ds-node-3 ansible_host=10.11.12.13
+ds-node-4 ansible_host=10.11.12.14
 
 [docker:children]
 docker_manager
 docker_worker
 
-[nfs_server]
-nfs-server-1 ansible_host=10.1.88.99
+[gluster:children]
+docker
 
-[nfs:children]
-nfs_server
+[firewall:children]
+docker
 ```
 
 ## Group & Host vars
 
 In addition to the group & host variables required for each role (see their associated READMEs), the following group & host variables will need setting:
 
-`inv.d/ds/group_vars/docker/vars.yml`
+`inv.d/group_vars/firewall/firewall.yml`
 ```yaml
-docker_swarm_network: '10.0.0.0/8'          # Network mask used to detect the IP address of the Docker swarm host (see notes below on behaviour)
-docker_swarm_port: 2377                     # Docker swarm port
+firewall_allowed_tcp_ports:                 # List of required tcp application ports to be opened
+firewall_allowed_udp_ports:                 # List of required udp application ports to be opened
 ```
-`inv.d/ds/group_vars/all/vars.yml`
+`inv.d/group_vars/gluster/gluster.yml`
+```yaml
+use_lvm:                                    # Enable LVM-based gluster config
+vg_data:                                    # List of gluster LVM data (see file for details of structure)
+gluster_data_structure:                     # List of gluster config & data directories (see file for details of structure)
+gluster_volumes:                            # Gluster volumes to mount on the gluster nodes (see file for details of structure)
+```
+`inv.d/group_vars/docker/docker.yml`
+```yaml
+docker_user:                                # Name of docker system userid to create
+user_data:                                  # Dictionary data for docker user (see file for details of structure)
+group_data:                                 # Dictionary data for docker group (see file for details of structure)
+sudo_groups:                                # List of users to add to sudo
+docker_swarm_network:                       # Network mask used to detect the IP address of the Docker swarm host (see notes below on behaviour). Can be manually set to override the automatically-discovered value
+docker_swarm_port:                          # Docker Swarm port (defaults to 2377)
+local_stacks_dir:                           # Directory on local machine of all stack data (see 'stacks' dir for examples)
+ds_data_path:                               # Docker Swarm base directory for storing stack compose files and data
+```
+`inv.d/group_vars/all/vars.yml`
 ```yaml
 ansible_user: ansible                       # Ansible user on target host
 verbosity_level: 0                          # Verbosity level when to display debug output (0 = always, 1 = -v, 2 = -vv, etc)
@@ -123,13 +149,9 @@ __`docker_swarm_network`__
 
 This is a network range used by Ansible to detect the correct interface/IP address for the Docker swarm manager/worker advertised address configuration. There are various behaviours related to how it is set, for example:
 
+* `undefined` Uses the IPv4 address that relates to the inventory's ansible_host (default)
 * `10.1.88.0/24` Sets the Docker swarm advertising address to the first adapter in that range, eg. `10.1.44.101`
 * `0.0.0.0/0` Uses the first adapter it finds as ALL IPv4 addresses will be in this global range
-* `undefined` Uses the default ansible IPv4 address (`ansible_default_ipv4['address']`)
-
-__Playbook variables__
-
-To overide group/host variable definitions, uncomment and amend the variables in the `vars:` section of the playbooks where denoted by the relevent comments section.
 
 ## Optional use of Ansible in Python3 virtual environment
 
@@ -143,14 +165,15 @@ __Note:__ To deactivate the venv, run `deactivate` from any directory
 
 ## Optional use of Vagrant
 
-This repo supplies an Ansible playbook that locally creates a Vagrantfile and target preparation script using the contents of the `ds` inventory. These can be used to provision and prepare a complete [VirtualBox](https://www.virtualbox.org) test infrastructure using [Vagrant](https://www.vagrantup.com) ready for the Docker swarm deployment. Although it is designed to work out of the box by design, please ensure that the following vagrant variables are configured correctly.
+This repo supplies an Ansible playbook that locally creates a Vagrantfile and target preparation script using the contents of the Ansible inventory. These can be used to provision and prepare a complete [VirtualBox](https://www.virtualbox.org) test infrastructure using [Vagrant](https://www.vagrantup.com) ready for the Docker swarm deployment. Although it is designed to work out of the box by design, please ensure that the following vagrant variables are configured correctly.
 
-`inv.d/ds/host_vars/localhost.yml`
+`inv.d/host_vars/localhost.yml`
 ```yaml
-vagrant_box_version: "centos/7"                           # Flavour and version of Vagran Box
+vagrant_box_version: "centos/8"                           # Flavour and version of Vagrant Box (supports centos/7 too)
 vagrant_guest_additions: False                            # Boolean for installing guest additions software
 vagrant_domain: ""                                        # Domain name for vagrant hosts
 vagrant_script_check: True                                # Defaults the prepare_ansible_targets.sh script to run in check mode
+vagrant_python_interpreter: auto                          # Ansible python interpreter
 vagrant_connect_user: vagrant                             # VM user created by vagrant
 vagrant_ansible_user: ansible                             # User to create in VM by prepare_ansible_targets.sh script
 vagrant_ansible_user_uid: 9999                            # UID for ansible user
@@ -202,12 +225,6 @@ By default all stacks are deployed (stacks are defined by directories under `sta
     ```
     __Note:__ *For additional debug output, set the verbosity level with: `-e "verbosity_level=0"`*
 
-
-1. To only prepare and install the NFS server
-    ```
-    ansible-playbook playbooks/site.yml --tags nfs
-    ```
-
 1. To only prepare and install Docker
     ```
     ansible-playbook playbooks/site.yml --tags docker
@@ -218,11 +235,11 @@ By default all stacks are deployed (stacks are defined by directories under `sta
     ansible-playbook playbooks/site.yml --tags swarm
     ```
 
-1. To deploy only the __test__ `db` & `web` stacks
+1. To deploy only the `db` & `web` stacks with the associated base & __test__ docker-compose files
 
-```
-ansible-playbook playbooks/site.yml --tags docker_stacks -e 'docker_stack_env=test' -e '{"docker_stack_names": ["db","web"]}'
-```
+    ```
+    ansible-playbook playbooks/site.yml --tags docker_stacks -e '{"docker_stack_names": ["db","web"]}' -e 'docker_stack_env=test'
+    ```
 
 >__Note__: There is no option to destroy this configuration. You are advised to create a new environment and re-deploy this configuration
 
@@ -235,3 +252,11 @@ cd vagrant; vagrant destroy --force; vagrant up; cd ..
 ## Author Information
 
 Adam Goldsmith
+
+## References
+
+| Link | Author |
+|------|--------|
+| [GlusterFS role](https://galaxy.ansible.com/geerlingguy/glusterfs) | Jeff Geerling |
+| [Firewall role](https://galaxy.ansible.com/geerlingguy/firewall) | Jeff Geerling |
+| [Docker + GlusterFS Article](https://www.frederikbanke.com/docker-setup-part-8-glusterfs-and-docker-on-multiple-servers/) | Frederik Banke |

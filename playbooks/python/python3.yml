@@ -1,5 +1,7 @@
 ---
 
+# python3 required for the python docker SDK (no longer works under python2 SDK)
+
 - name: Install python3
   hosts: docker
   gather_facts: yes
@@ -9,7 +11,17 @@
 
   tasks:
 
-    - name: Install python3 package
+    - name: Install python3 package on CentOS 7
+      vars:
+        ansible_python_interpreter: /usr/bin/python
+      yum:
+        name: python3
+        state: present
+      when: ansible_distribution_major_version == "7"
+
+    - name: Install python3 package on CentOS 8
+      vars:
+        ansible_python_interpreter: auto
       dnf:
         name: python3
         state: present

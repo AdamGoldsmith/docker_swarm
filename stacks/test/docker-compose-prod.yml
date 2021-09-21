@@ -1,15 +1,10 @@
 version: '3.7'
 
-# TODO: Check why these are commented - they appear valid overlays
-# services:
-#   nfs:
-#     environment:
-#       STACK_ENV: PROD
+services:
+  mysql:
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysqlprod
 
-#   mysql:
-#     environment:
-#       - MYSQL_ROOT_PASSWORD=mysqlprod
-
-#   mariadb:
-#     environment:
-#       - MYSQL_ROOT_PASSWORD=mariadbprod
+  mariadb:
+    environment:
+      - MYSQL_ROOT_PASSWORD=mariadbprod

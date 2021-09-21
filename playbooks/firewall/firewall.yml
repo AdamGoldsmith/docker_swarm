@@ -23,11 +23,15 @@
       delegate_to: localhost
       run_once: yes
       become: no
-      when: repo_item['name'] == 'ansible-role-firewall'
+      when:
+        - repo_item['name'] == 'ansible-role-firewall'
+        - ansible_distribution_major_version == "8"
 
   tasks:
 
     - name: Run firewall role
       include_role:
         name: ansible-role-firewall
-      when: not (git_clone is changed and ansible_check_mode)
+      when:
+        - not (git_clone is changed and ansible_check_mode)
+        - ansible_distribution_major_version == "8"
