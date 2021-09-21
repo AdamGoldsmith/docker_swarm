@@ -174,8 +174,7 @@ vagrant_guest_additions: False                            # Boolean for installi
 vagrant_domain: ""                                        # Domain name for vagrant hosts
 vagrant_script_check: True                                # Defaults the prepare_ansible_targets.sh script to run in check mode
 vagrant_python_interpreter: auto                          # Ansible python interpreter
-vagrant_connect_user: vagrant                             # VM user created by vagrant
-vagrant_ansible_user: ansible                             # User to create in VM by prepare_ansible_targets.sh script
+vagrant_connect_user: vagrant                             # VM connection user created by vagrant
 vagrant_ansible_user_uid: 9999                            # UID for ansible user
 vagrant_connect_user_privkey_file: ~/.ssh/id_rsa          # Path to private SSH key used to connect to VM
 vagrant_ansible_user_pubkey_file: ~/.ssh/id_rsa.pub       # Path to publc SSH key pair file

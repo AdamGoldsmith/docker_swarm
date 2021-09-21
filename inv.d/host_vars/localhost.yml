@@ -7,7 +7,6 @@ vagrant_guest_additions: False
 vagrant_domain: ""
 vagrant_script_check: True
 vagrant_connect_user: vagrant
-vagrant_ansible_user: ansible
 vagrant_ansible_user_uid: 9999
 vagrant_connect_user_privkey_file: ~/.ssh/id_rsa
 vagrant_ansible_user_pubkey_file: ~/.ssh/id_rsa.pub

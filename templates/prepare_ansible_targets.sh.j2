@@ -20,7 +20,7 @@
 {{ "%-60s" | format('check=' + vagrant_script_check | default(True) | bool | int | string,) }} # Uses Ansible's --check flag when not set to 0
 {{ "%-60s" | format('inventory="' + inventory_file + '"',) }} # The Ansible inventory to source
 {{ "%-60s" | format('connect_user="' + vagrant_connect_user | default('vagrant') + '"',) }} # Existing admin user on target hosts used for creating the ansible user
-{{ "%-60s" | format('ansible_user="' + vagrant_ansible_user | default('ansible') + '"',) }} # Name of Ansible user to create on target hosts
+{{ "%-60s" | format('ansible_user="' + ansible_user | default('ansible') + '"',) }} # Name of Ansible user to create on target hosts
 {{ "%-60s" | format('ansible_user_uid="' + vagrant_ansible_user_uid | default('9999') | string + '"',) }} # UID of Ansible user on target hosts
 {{ "%-60s" | format('connect_user_privkey_file="' + vagrant_connect_user_privkey_file | default('~/.ssh/id_rsa') | expanduser + '"',) }} # Private key file of existing target host admin user
 {{ "%-60s" | format('ansible_user_pubkey_file="' + vagrant_ansible_user_pubkey_file | default('~/.ssh/id_rsa.pub') | expanduser + '"',) }} # Public key file to upload for newly-created ansible user (authorized_keys file entry)
