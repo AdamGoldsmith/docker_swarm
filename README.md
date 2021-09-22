@@ -8,7 +8,7 @@ From root directory of repo:
 
 1. `./scripts/ansible_venv.sh && source ~/venvs/ansible_ds/bin/activate` (__Optional__ step that creates & sources an ansible-enabled python virtual environment [__Requires python3__])
 1. `ansible-playbook playbooks/vagrant/prepare_vagrant.yml -e "vagrant_script_check=no"`
-1. `cd vagrant; vagrant up; cd ..`
+1. `cd vagrant && vagrant up && cd ..`
 1. `./scripts/prepare_ansible_targets.sh`
 1. `ansible-playbook playbooks/site.yml`
 1. Point browser at http://10.11.12.11:8088 to access [visualizer](https://github.com/dockersamples/docker-swarm-visualizer)
