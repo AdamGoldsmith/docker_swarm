@@ -16,7 +16,7 @@ SSH_PUB_KEY="id_rsa.pub"
 servers=[
 {% for host in groups['docker'] %}
   {
-    :hostname => "{{ host + vagrant_domain | default('') }}",
+    :hostname => "{{ host + (vagrant_domain | default('') | length) | ternary('.', '') + vagrant_domain | default('') }}",
     :ip => "{{ hostvars[host]['ansible_host'] }}",
     :ssh_port => "{{ 8800 + loop['index'] }}",
     :ram => {{ hostvars[host]['vagrant_ram'] }},
